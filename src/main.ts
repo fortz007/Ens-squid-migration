@@ -12,10 +12,8 @@ import { processors } from './processor'
 // Create a function to transform and save data for a specific contract
 async function processContractLogs(
   processorIndex: number, // Index of the processor in the processors array
-  // Name of the entity for this contract
 ) {
   const processor = processors[processorIndex]
-//   const EntityClass = entityToProcessor[entityName]
 
   processor.run(new TypeormDatabase({ supportHotBlocks: true }), async (ctx) => {
     const domains: Domain[] = []
@@ -165,6 +163,6 @@ async function processContractLogs(
 }
 // Loop through processors and process logs for each contract
 for (let i = 0; i < processors.length; i++) {
-  await processContractLogs(i)
+   processContractLogs(i)
 }
 
