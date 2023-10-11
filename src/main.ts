@@ -16,7 +16,7 @@ async function processContractLogs(
   const processor = processors[processorIndex]
 
   processor.run(new TypeormDatabase({ supportHotBlocks: true }), async (ctx) => {
-    const domains: Domain[] = []
+    const domains: Map<String, Domain> = new Map();
     const transfers: Transfer[] = []
 
     let domain = new Domain();
@@ -28,6 +28,7 @@ async function processContractLogs(
         if (e.topics[0] === RegistryABI.events.Transfer.topic) {
             let {node, owner} = RegistryABI.events.Transfer.decode(e)
             domain.owner = owner
+            domains.set(node, domain)
         }
         if (e.topics[0] === RegistryABI.events.NewOwner.topic) {
             let {node, label, owner} = RegistryABI.events.NewOwner.decode(e)
@@ -81,8 +82,7 @@ async function processContractLogs(
         }
         if (e.topics[0] === NameWrapperABI.events.ExpiryExtended.topic) {
             let {node, expiry} = NameWrapperABI.events.ExpiryExtended.decode(e)
-            domain.expiryDate = expiry
-            
+            domain.expiryDate = expiry   
         }
         if (e.topics[0] === NameWrapperABI.events.FusesSet.topic) {
             let {node, fuses} = NameWrapperABI.events.FusesSet.decode(e)
@@ -156,13 +156,16 @@ async function processContractLogs(
         }
       }
     }
-
-    // Save entities to the database
-    await ctx.store.upsert(domains)
+    await ctx.store.upsert([...domains.values()]);
   })
 }
-// Loop through processors and process logs for each contract
-for (let i = 0; i < processors.length; i++) {
-   processContractLogs(i)
-}
-
+async function main() {
+   
+    for (let i = 0; i < processors.length; i++) {
+        await processContractLogs(i)
+      }
+  }
+  
+  main().catch((error) => {
+    console.error(error);
+  });
